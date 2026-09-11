@@ -1,3 +1,4 @@
+# Ths game is about catching stars and earning points
 import pygame
 import time
 import random
