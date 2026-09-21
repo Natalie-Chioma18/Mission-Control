@@ -1,0 +1,148 @@
+# Ths game is about catching stars and earning points
+import pygame
+import time
+import random
+
+pygame.init()
+screen = pygame.display.set_mode((600, 400))
+clock = pygame.time.Clock()
+font = pygame.font.Font(None, 36)
+button_font = pygame.font.Font(None, 38)
+title_font = pygame.font.Font(None, 54)
+
+WHITE = (255, 255, 255)
+BLUE = (0, 0, 255)
+RED = (255, 0, 0)
+BG = (20, 20, 40)
+YELLOW = (255, 255, 0)
+
+player_x = 270
+player_y = 380
+vel = 5
+player_speed = 2
+
+star_x = random.randint(0, 580)
+star_y = 0
+star_speed = 2
+
+bonus_star_x = random.randint(0, 580)
+bonus_star_y = 0
+bonus_star_speed = 2
+
+score = 0
+misses = 0
+start_time = time.time()
+elapsed_time = 0
+state = "start"
+
+start_button = pygame.Rect(220, 180, 160, 50)
+reset_button = pygame.Rect(220, 220, 160, 50)
+
+
+def reset_game():
+    global player_x, star_x, star_y, star_speed, bonus_star_x, bonus_star_y, bonus_star_speed
+    global score, misses, start_time, elapsed_time, state
+
+    player_x = 270
+    star_x = random.randint(0, 580)
+    star_y = 0
+    star_speed = 4
+    bonus_star_x = random.randint(0, 580)
+    bonus_star_y = 0
+    bonus_star_speed = 2
+    score = 0
+    misses = 0
+    start_time = time.time()
+    elapsed_time = 0
+    state = "playing"
+
+
+running = True
+while running:
+    clock.tick(60)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if state == "start" and start_button.collidepoint(event.pos):
+                reset_game()
+            elif state == "game_over" and reset_button.collidepoint(event.pos):
+                reset_game()
+
+    if state == "playing":
+        elapsed_time = time.time() - start_time
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] and player_x > 0:
+            player_x -= vel
+            player_x -= player_speed
+        if keys[pygame.K_RIGHT] and player_x < 500:
+            player_x += vel
+            player_x += player_speed
+
+        star_y += star_speed
+        bonus_star_y += bonus_star_speed
+
+        player_rect = pygame.Rect(player_x, player_y, 100, 60)
+        star_rect = pygame.Rect(star_x, star_y, 20, 20)
+        bonus_star_rect = pygame.Rect(bonus_star_x, bonus_star_y, 20, 20)
+
+        if player_rect.colliderect(star_rect):
+            score += 1
+            star_x = random.randint(0, 580)
+            star_y = 0
+            star_speed += 0.2
+
+        if star_y > 400:
+            misses += 1
+            star_x = random.randint(0, 580)
+            star_y = 0
+
+        if player_rect.colliderect(bonus_star_rect):
+            score += 3
+            bonus_star_y = 0
+            bonus_star_speed += 0.2
+            bonus_star_x = random.randint(0, 580)
+
+        if misses >= 3:
+            state = "game_over"
+
+    screen.fill(BG)
+
+    if state == "start":
+        title_text = title_font.render("Catch the Stars", True, WHITE)
+        screen.blit(title_text, (140, 100))
+        pygame.draw.rect(screen, BLUE, start_button)
+        start_text = button_font.render("START", True, WHITE)
+        screen.blit(start_text, (start_button.x + 40, start_button.y + 8))
+
+    elif state == "playing":
+        pygame.draw.rect(screen, BLUE, (player_x, player_y, 100, 60))
+        pygame.draw.circle(screen, YELLOW, (star_x, star_y), 10)
+        pygame.draw.circle(screen, YELLOW, (bonus_star_x, bonus_star_y), 5)
+
+        timer_text = font.render(f"Time: {elapsed_time:.1f}s", True, WHITE)
+        screen.blit(timer_text, (10, 10))
+
+        misses_text = font.render(f"Misses: {misses}", True, WHITE)
+        screen.blit(misses_text, (10, 90))
+
+        score_text = font.render(f"Score: {score}", True, WHITE)
+        screen.blit(score_text, (10, 50))
+
+    elif state == "game_over":
+        game_over_text = title_font.render("Game Over", True, RED)
+        screen.blit(game_over_text, (170, 80))
+
+        final_score_text = font.render(f"Final Score: {score}", True, WHITE)
+        screen.blit(final_score_text, (200, 150))
+
+        pygame.draw.rect(screen, RED, reset_button)
+        reset_text = button_font.render("RESET", True, WHITE)
+        screen.blit(reset_text, (reset_button.x + 40, reset_button.y + 8))
+
+    pygame.display.flip()
+
+pygame.quit()
